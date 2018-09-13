@@ -1,0 +1,4 @@
+#!/bin/bash
+var=$(whoami)
+echo $var
+ps aux | grep -v $var | cut -c10-14

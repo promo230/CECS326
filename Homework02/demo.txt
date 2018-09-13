@@ -1,0 +1,1 @@
+Hello my name is Pramod. If this program worked properly, you should see this in outFile.txt. :)
