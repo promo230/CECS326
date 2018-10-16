@@ -9,38 +9,37 @@ int main(int argc, char *argv[]){
         //Create and initialize a semaphore before fork
         key_t myKey;
         int semid;
-        myKey = ftok("light.c", 'x');
+        myKey = ftok("heavy.c", 'x');
         //Request 1 semaphore
-        semid = semget(myKey, 5, IPC_CREAT | 0600);
+//      semid = semget(myKey, 5, IPC_CREAT | 0600);
 //      int semctl(int semid, int semnum, int cmd, arg);        
         semctl(semid, 0, SETVAL, 1);
         //Print the semaphore ID
-        printf("Semaphore ID %d\n", semid);
 
         //Declare structs for locking and unlocking
-        static struct sembuf Wait = {0,-1,SEM_UNDO};
-        static struct sembuf Signal = {0,1,SEM_UNDO};
-
+        static struct sembuf Wait [5]= {{0,-1,SEM_UNDO},{1,-1,SEM_UNDO}, {2, -1, SEM_UNDO}, {3, -1, SEM_UNDO}, {4, -1, SEM_UNDO}};
+        static struct sembuf Signal [5] =  {{0,-1,SEM_UNDO},{1,-1,SEM_UNDO}, {2, -1, SEM_UNDO}, {3, 1, SEM_UNDO}, {4, 1, SEM_UNDO}};
+	static struct sembuf OpList[3];
+        semid = semget(myKey, 5, IPC_CREAT | 0600);
         
-        int j = 0;
+        printf("Semaphore ID %d\n", semid);
+	int j = 0;
         for(j =0; j < 5; j++){
                 //Lock
-               // semop(semid, &Wait, 1);
-		semctl(semid, 0, SETVAL, 0);
-		semctl(semid, 1, SETVAL, 0);
-		semctl(semid, 2, SETVAL, 0);
-//		semctl(semid, 3, SETVAL, 0);
-//		semctl(semid, 4, SETVAL, 0);
+                OpList[0] = Wait[0];
+		OpList[1] = Wait[1];
+		OpList[2] = Wait[2];
+		semop(semid, OpList, 3);
                 printf("HeavyWeight Starting\n");
+		fflush(stdout);
                 sleep(4);
                 printf("HeavyWeight Ending\n");
+		fflush(stdout);
                 //Release lock
-               // semop(semid, &Signal, 1);
-		semctl(semid, 0, SETVAL, 1);
-		semctl(semid, 1, SETVAL, 1);
-		semctl(semid, 2, SETVAL, 1);
-//		semctl(semid, 3, SETVAL, 1);
-//		semctl(semid, 4, SETVAL, 1);
+                OpList[0] = Signal[0];
+		OpList[1] = Signal[1];
+		OpList[2] = Signal[2];
+		semop(semid, OpList, 3);
 		sleep(8);
         }//End for
 return 0;
