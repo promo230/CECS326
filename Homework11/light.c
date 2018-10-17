@@ -27,7 +27,7 @@ int main(int argc, char *argv[]){
                 //Lock required resources (0,1)
 		OpList[0] = Wait[0];
 		OpList[1] = Wait[1];
-                semop(semid, OpList, 2);
+//              semop(semid, OpList, 2);
 		//Print to console start
                 printf("LightWeight Starting\n");
 		fflush(stdout);	
@@ -40,7 +40,7 @@ int main(int argc, char *argv[]){
                 //Unlock required resources (3,4)
 		OpList[0] = Signal[0];
 		OpList[1] = Signal[1];
-                semop(semid, OpList, 2);
+//              semop(semid, OpList, 2);
 		
 		//Sleep 8
 		sleep(8);

@@ -33,7 +33,7 @@ int main(int argc, char *argv[]){
                 OpList[0] = Wait[0];
 		OpList[1] = Wait[1];
 		OpList[2] = Wait[2];
-		semop(semid, OpList, 3);
+//		semop(semid, OpList, 3);
 		//Print to console start
                 printf("HeavyWeight Starting\n");
 		fflush(stdout);
@@ -46,7 +46,7 @@ int main(int argc, char *argv[]){
                 OpList[0] = Signal[0];
 		OpList[1] = Signal[1];
 		OpList[2] = Signal[2];
-		semop(semid, OpList, 3);
+//		semop(semid, OpList, 3);
 		//Sleep 8
 		sleep(8);
         }//End for
