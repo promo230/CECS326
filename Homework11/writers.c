@@ -5,47 +5,40 @@
 #include <sys/ipc.h> /* Needed for semaphore */
 #include <sys/sem.h> /* Needed for semaphore */
 #include <stdio.h>
-int main(int argc, char *argv[]){
-        //Create and initialize a semaphore before fork
-        key_t myKey;
-        int semid;
-        myKey = ftok("heavy.c", 'x');
-        //Request 1 semaphore
-//      semid = semget(myKey, 5, IPC_CREAT | 0600);
-//      int semctl(int semid, int semnum, int cmd, arg);        
-        semctl(semid, 0, SETVAL, 1);
-        //Print the semaphore ID
+int main (int argc, char* argv[]) {
+	static struct sembuf BlockReaders = {0,-1,SEM_UNDO};
+	static struct sembuf SignalReaders = {0,1,SEM_UNDO};
+	static struct sembuf BlockWriters = {1,-1,SEM_UNDO};
+	static struct sembuf SignalWriters = {1,1,SEM_UNDO};
+	static struct sembuf BlockCounter = {2,-1,SEM_UNDO};
+	static struct sembuf SignalCounter = {2,1,SEM_UNDO};
+	static struct sembuf DecrementConter = {3,-1,SEM_UNDO};
+	static struct sembuf IncrementCounter = {3,1,SEM_UNDO}; 
 
-        //Declare structs for locking and unlocking
-        static struct sembuf Wait [4]= {{0,-1,SEM_UNDO},{1,-1,SEM_UNDO}, {2, -1, SEM_UNDO}, {3, -1, SEM_UNDO}};
-        static struct sembuf Signal[4] =  {{0,-1,SEM_UNDO},{1,-1,SEM_UNDO}, {2, -1, SEM_UNDO}, {3, 1, SEM_UNDO}};
-	static struct sembuf OpList[4];
-        semid = semget(myKey, 4, IPC_CREAT | 0600);
-        
-        printf("Semaphore ID %d\n", semid);
-	int j = 0;
-        for(j =0; j < 5; j++){
-                //Lock Readers
+	key_t key = ftok("writers.c", 1);
+	if (key < 0) {
+		printf("Invalid semaphore path\n");
+		return 1;
+	}
 
-		//writer lock
-                OpList[0] = Wait[0];
-		OpList[1] = Wait[1];
-		OpList[2] = Wait[2];
-		semop(semid, OpList, 3);
-                printf("Writing\n");
+	int sem_id;
+
+	if ((sem_id = semget(key, 4, IPC_CREAT | IPC_EXCL | 0600)) != -1) {
+		for (int i = 0; i < 3; i++) semctl(sem_id, i, SETVAL, 1);
+		semctl(sem_id, 3, SETVAL, 0);
+	} else sem_id = semget(key, 4, 0600);
+
+	for (int i = 0; i < 5; i++) {
+		semop(sem_id, &BlockReaders, 1); /* wait */
+		semop(sem_id, &BlockWriters, 1);
+		printf("Writing\n");
 		fflush(stdout);
-                sleep(4);
-                printf("Done writing\n");
+		sleep(4);
+		printf("Done writing\n");
 		fflush(stdout);
-                //Release lock
-                OpList[0] = Signal[0];
-		OpList[1] = Signal[1];
-		OpList[2] = Signal[2];
-		semop(semid, OpList, 3);
-
-		//reader unlock
+		semop(sem_id, &SignalWriters, 1); /* signal */
+		semop(sem_id, &SignalReaders, 1);
 		sleep(8);
-        }//End for
-return 0;
+	}
+	semctl(sem_id, 0, IPC_RMID, 0);
 };
-

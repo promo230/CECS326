@@ -5,51 +5,38 @@
 #include <sys/ipc.h> /* Needed for semaphore */
 #include <sys/sem.h> /* Needed for semaphore */
 #include <stdio.h>
+
+//heavy.c
 int main(int argc, char *argv[]){
-//      semctl(semid, 0, SETVAL, 1);
-
-        //Declare structs for locking and unlocking
-        static struct sembuf Wait [3]= {{0,-1,SEM_UNDO},{1,-1,SEM_UNDO},
-	 {2, -1, SEM_UNDO}};
-        static struct sembuf Signal[3] =  {{0,-1,SEM_UNDO},{1,-1,SEM_UNDO},
-	 {2, -1, SEM_UNDO}};
-	static struct sembuf OpList[3];
-
         key_t myKey;
         int semid;
         myKey = ftok("heavy.c", 'x');
-        semid = semget(myKey, 3, IPC_CREAT | 0600);
-	semctl(semid, 0, SETVAL, 0);       
-	semctl(semid, 1, SETVAL, 0);       
-	semctl(semid, 2, SETVAL, 0);       
- 
-	//Print sem id
-        printf("Semaphore ID %d\n", semid);
-		
-	// 0:H1 1:H2 2:H3
-	int j =0;
+        //Declare structs for locking and unlocking
+        static struct sembuf Wait = {0, -3, SEM_UNDO};
+        static struct sembuf Signal = {0, 3, SEM_UNDO};
+	//Check if semaphore exists and set value
+	if((semid = semget(myKey, 1, IPC_CREAT | IPC_EXCL | 0600)) != -1){ 
+        	semctl(semid, 0, SETVAL, 5);
+	}else{
+		semid = semget(myKey, 1, 0600);
+	}
+
+	printf("Semaphore ID %d\n", semid);
+	int j = 0;
         for(j =0; j < 5; j++){
-                //Lock required resources (0,1,2)
-                OpList[0] = Wait[0];
-		OpList[1] = Wait[1];
-		OpList[2] = Wait[2];
-//		semop(semid, OpList, 3);
-		//Print to console start
+                //Lock
+		semop(semid, &Wait, 1);
                 printf("HeavyWeight Starting\n");
 		fflush(stdout);
-		//Sleep 4
                 sleep(4);
-		//Print to console end
                 printf("HeavyWeight Ending\n");
 		fflush(stdout);
-                //Unlock required resources (1,2,3)
-                OpList[0] = Signal[0];
-		OpList[1] = Signal[1];
-		OpList[2] = Signal[2];
-//		semop(semid, OpList, 3);
-		//Sleep 8
+                //Release lock
+		semop(semid, &Signal, 1);
 		sleep(8);
         }//End for
+	//Cleanup
+	semctl(semid, 0, IPC_RMID, 0);
 return 0;
 };
 
