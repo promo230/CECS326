@@ -5,12 +5,16 @@
 #include <unistd.h>
 #include <stdlib.h>
 int main () {
-	int result;
 	int fd;
+	mkfifo("fifo.pipe",0600);	
+	int fd1;
+	mkfifo("fifo1.pipe", 0600);	
+	for(int i = 0; i < 5; i++){
+
 	int multiplier;
 	int multiplicand;
 	int product;
-	result = mkfifo("fifo.pipe",0600);
+	fd1 = open("fifo1.pipe", O_WRONLY);	
 	fd = open("fifo.pipe",O_RDONLY);
 	//Read multiplicand from pipe
 	read(fd, &multiplicand, sizeof(multiplicand));
@@ -22,6 +26,8 @@ int main () {
 	product = multiplier*multiplicand;
 	printf("Product is: %d\n", product);
 	//Write answer to other pipe
-	write(fd, &product, sizeof(product));
+	write(fd1, &product, sizeof(product));
+	close(fd1);
+	}
 	return 0;
 };
