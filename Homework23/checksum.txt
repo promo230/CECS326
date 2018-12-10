@@ -1,0 +1,6 @@
+Pi there. This is a file on which you can test the checksum
+command found in the Linux system. As part of the test of the
+checksum, you are to modify one letter of this file. Please
+inform the instructor which letter you modified. Don't modify
+the same letter as another student. Your results should be
+unique.
